@@ -6,8 +6,11 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "kalnoy/nestedset": "^6.0",
         "laravel/framework": "^11.9",
-        "laravel/tinker": "^2.9"
+        "laravel/tinker": "^2.9",
+        "nwidart/laravel-modules": "^11.0",
+        "sqits/laravel-userstamps": "^0.0.12"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -57,7 +60,8 @@
         "sort-packages": true,
         "allow-plugins": {
             "pestphp/pest-plugin": true,
-            "php-http/discovery": true
+            "php-http/discovery": true,
+            "wikimedia/composer-merge-plugin": true
         }
     },
     "minimum-stability": "stable",
