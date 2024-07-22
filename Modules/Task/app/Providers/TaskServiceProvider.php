@@ -3,7 +3,10 @@
 namespace Modules\Task\Providers;
 
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Modules\Task\Models\Task;
+use Modules\Task\Policies\TaskPolicy;
 
 class TaskServiceProvider extends ServiceProvider
 {
@@ -22,6 +25,8 @@ class TaskServiceProvider extends ServiceProvider
         $this->registerConfig();
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->moduleName, 'database/migrations'));
+
+        Gate::policy(Task::class, TaskPolicy::class);
     }
 
     /**

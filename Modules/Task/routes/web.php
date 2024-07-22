@@ -14,6 +14,6 @@ use Modules\Task\Http\Controllers\TaskController;
 |
 */
 
-Route::group([], function () {
-    Route::resource('task', TaskController::class)->names('task');
+Route::middleware(['auth'])->group(function () {
+    Route::resource('tasks', TaskController::class);
 });

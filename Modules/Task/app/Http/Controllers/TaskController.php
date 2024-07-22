@@ -1,67 +1,88 @@
 <?php
-
 namespace Modules\Task\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\RedirectResponse;
+use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Gate;
+use Modules\Task\Models\Task;
+use Modules\Task\Notifications\TaskAssigned;
 
 class TaskController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        return view('task::index');
+        $tasks = Task::get()->toTree();
+        return view('task::index', compact('tasks'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        return view('task::create');
+        $tasks = Task::get()->toTree();
+        $users = User::all();
+        return view('task::create', compact('tasks', 'users'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request)
     {
-        //
+        $task = Task::create($request->all());
+        
+        if ($parentId = $request->input('parent_id')) {
+            $parent = Task::find($parentId);
+            $parent->appendNode($task);
+        } else {
+            $task->saveAsRoot();
+        }
+
+        foreach ($request->input('user_id') as $userId) {
+            $user = User::find($userId);
+            $user->tasks()->attach($task->id);
+            $user->notify(new TaskAssigned($task));
+        }
+
+        return redirect()->route('tasks.index');
     }
 
-    /**
-     * Show the specified resource.
-     */
-    public function show($id)
+    public function show(Task $task)
     {
-        return view('task::show');
+        Gate::authorize('view', $task);
+
+        return view('task::show', compact('task'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit($id)
+    public function edit(Task $task)
     {
-        return view('task::edit');
+        Gate::authorize('view', $task);
+        $tasks = Task::get()->toTree();
+        $users = User::all();
+        return view('task::edit', compact('task', 'tasks', 'users'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, $id): RedirectResponse
+    public function update(Request $request, Task $task)
     {
-        //
+        $task->update($request->all());
+
+        if ($parentId = $request->input('parent_id')) {
+            $parent = Task::find($parentId);
+            $parent->appendNode($task);
+        } else {
+            $task->saveAsRoot();
+        }
+
+        $task->users()->detach();
+
+        foreach ($request->input('user_id') as $userId) {
+            $user = User::find($userId);
+            $user->tasks()->attach($task->id);
+            $user->notify(new TaskAssigned($task));
+        }
+
+        return redirect()->route('tasks.index');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy($id)
+    public function destroy(Task $task)
     {
-        //
+        $task->delete();
+        return redirect()->route('tasks.index');
     }
 }
